@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useContext, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { FaLeaf } from 'react-icons/fa'
 import ConnectWalletButton from '../components/ConnectWalletButton'
@@ -8,10 +8,21 @@ import FundingForm from '../components/FundingForm'
 import SBTCards from '../components/SBTCards'
 import PreviousFunds from '../components/PreviousFunds'
 import TrustBuildingSection from '../components/TrustBuildingSection'
+import { WalletContext } from '../contexts/walletContext'
 
 const FundProviderDashboard = () => {
   const [isConnected, setIsConnected] = useState(false)
   const [totalFunded, setTotalFunded] = useState(0)
+  const [showTxnPopup, setShowTxnPopup] = useState(false)
+
+  const { connected, loading, txnHash } = useContext(WalletContext);
+
+  useEffect(() => {
+    if (txnHash) {
+      // Show the popup when the transaction hash is available
+      setShowTxnPopup(true);
+    }
+  }, [txnHash]);
 
   const handleConnect = () => {
     // Implement actual wallet connection logic here
@@ -19,7 +30,11 @@ const FundProviderDashboard = () => {
   }
 
   const handleFund = (amount) => {
-    setTotalFunded(prev => prev + amount)
+    setTotalFunded((prev) => prev + amount)
+  }
+
+  const closePopup = () => {
+    setShowTxnPopup(false);
   }
 
   return (
@@ -30,7 +45,7 @@ const FundProviderDashboard = () => {
             <FaLeaf className="text-3xl text-green-400" />
             <h1 className="text-3xl font-bold">EcoFund Dashboard</h1>
           </div>
-          <ConnectWalletButton onConnect={handleConnect} isConnected={isConnected} />
+          <ConnectWalletButton />
         </div>
       </header>
       <main className="container mx-auto px-4 py-8">
@@ -39,7 +54,15 @@ const FundProviderDashboard = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
-          {isConnected ? (
+          {loading ? (
+            // Loader section, visible when loading is true
+            <div className="flex justify-center items-center h-96">
+              <div className="flex flex-col items-center">
+                <div className="loader animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-green-400"></div>
+                <p className="text-xl mt-4">Transaction is processing...</p>
+              </div>
+            </div>
+          ) : connected ? (
             <>
               <FundingForm onFund={handleFund} />
               <TrustBuildingSection />
@@ -54,9 +77,32 @@ const FundProviderDashboard = () => {
           )}
         </motion.div>
       </main>
+
+      {/* Transaction Hash Popup */}
+      {showTxnPopup && txnHash && (
+        <div className="fixed top-0 left-0 right-0 bottom-0 bg-gray-900 bg-opacity-50 flex justify-center items-center ">
+          <div className="bg-white p-6 rounded-lg text-center">
+            <h2 className="text-xl font-bold mb-4 text-green-400">Transaction Successful</h2>
+            <p className="mb-4 text-black">view on block explorer</p>
+            <a
+              href={`https://base-sepolia.blockscout.com/tx/${txnHash}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-600 underline"
+            >
+              {txnHash}
+            </a>
+            <button
+              className="mt-4 px-6 py-2 bg-green-600 text-white rounded-lg"
+              onClick={closePopup}
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
 
-export default FundProviderDashboard
-
+export default FundProviderDashboard;

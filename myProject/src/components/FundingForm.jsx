@@ -1,19 +1,23 @@
-import React, { useState } from 'react'
+import React, { useContext, useState } from 'react'
 import { motion } from 'framer-motion'
+import { WalletContext } from '../contexts/walletContext'
 
 // interface FundingFormProps {
 //   onFund: (amount: number) => void
 // }
 
-const FundingForm= ({ onFund }) => {
+const FundingForm = ({ onFund }) => {
   const [amount, setAmount] = useState('')
   const [message, setMessage] = useState('')
 
-  const handleSubmit = (e) => {
+  const { initiateTransaction } = useContext(WalletContext)
+
+  const handleSubmit = async (e) => {
     e.preventDefault()
-    onFund(Number(amount))
+    await initiateTransaction(amount);
     setAmount('')
     setMessage('')
+
   }
 
   return (
